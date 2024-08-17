@@ -1,13 +1,16 @@
-import "./App.css";
-import { QueenProvider } from "./context/queen";
+import { Box } from "@mui/material";
+import { AppBar } from "./components/AppBar";
 import { Queens } from "./Queens";
 
-function App() {
+export const App = () => {
   return (
-    <QueenProvider>
-      <Queens />
-    </QueenProvider>
+    <Box>
+      <AppBar />
+      <Box className="mt-32">
+        <Queens />
+      </Box>
+    </Box>
   );
-}
+};
 
 export default App;

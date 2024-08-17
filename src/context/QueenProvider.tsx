@@ -2,6 +2,22 @@ import { produce } from "immer";
 import { createContext, ReactNode, useReducer } from "react";
 import { getRandomColors, shuffleArray } from "../utils";
 
+type CellState = "queen" | "nothing" | "cross";
+
+type Grid = {
+  state: CellState;
+  isError?: boolean;
+  color: string;
+}[][];
+
+type State = { solved: boolean; grid: Grid };
+
+type Action =
+  | { type: "single-click"; payload: { i: number; j: number } }
+  | { type: "double-click"; payload: { i: number; j: number } }
+  | { type: "reset"; payload?: undefined }
+  | { type: "change-grid"; payload: { n: number } };
+
 interface QueenContext {
   n: number;
   onClick: (i: number, j: number) => void;
@@ -14,22 +30,6 @@ interface QueenContext {
   isError: (i: number, j: number) => boolean;
   isValid: (i: number, j: number) => boolean;
 }
-
-export const QueenContext = createContext<QueenContext>({} as QueenContext);
-
-type Action =
-  | { type: "single-click"; payload: { i: number; j: number } }
-  | { type: "double-click"; payload: { i: number; j: number } }
-  | { type: "reset"; payload?: undefined }
-  | { type: "change-grid"; payload: { n: number } };
-
-type CellState = "queen" | "nothing" | "cross";
-
-type Grid = {
-  state: CellState;
-  isError?: boolean;
-  color: string;
-}[][];
 
 const generateGrid = (n: number): Grid => {
   const matrix = getColorMatrix(n);
@@ -118,7 +118,6 @@ const getColorMatrix = (n: number) => {
   return matrix;
 };
 
-type State = { solved: boolean; grid: Grid };
 const reducer = (state: State, action: Action) => {
   const { type, payload } = action;
   const n = state.grid.length;
@@ -127,13 +126,22 @@ const reducer = (state: State, action: Action) => {
 
   return produce(state, (draft) => {
     switch (type) {
-      case "single-click":
+      case "single-click": {
+        const { i, j } = payload;
+        if (!isValid(i, j)) return;
+        const { state: currentState } = draft.grid[i][j];
+        if (currentState === "nothing") draft.grid[i][j].state = "cross";
+        if (currentState === "cross") draft.grid[i][j].state = "queen";
+        if (currentState === "queen") draft.grid[i][j].state = "nothing";
+        break;
+      }
       case "double-click": {
         const { i, j } = payload;
-        if (!isValid) return draft;
+        if (!isValid) return;
         const { state: currentState } = draft.grid[i][j];
-        draft.grid[i][j].state =
-          currentState === "nothing" ? "queen" : "nothing";
+        if (currentState === "cross") draft.grid[i][j].state = "nothing";
+        if (currentState === "nothing") draft.grid[i][j].state = "queen";
+        if (currentState === "queen") draft.grid[i][j].state = "cross";
         break;
       }
       case "reset":
@@ -171,13 +179,14 @@ const reducer = (state: State, action: Action) => {
             if (otherState === "queen") draft.grid[i][j].isError = true;
           }
         }
+        const diagonalNeighborOffsets = [
+          [-1, -1],
+          [1, 1],
+          [-1, 1],
+          [1, -1],
+        ];
         if (
-          [
-            [-1, -1],
-            [1, 1],
-            [-1, 1],
-            [1, -1],
-          ].some(
+          diagonalNeighborOffsets.some(
             ([xOffset, yOffset]) =>
               isValid(i + xOffset, j + yOffset) &&
               draft.grid[i + xOffset][j + yOffset].state === "queen"
@@ -195,10 +204,12 @@ const reducer = (state: State, action: Action) => {
   });
 };
 
+export const QueenContext = createContext<QueenContext>({} as QueenContext);
+
 export const QueenProvider = ({ children }: { children: ReactNode }) => {
   const [{ solved, grid }, dispatch] = useReducer(reducer, {
     solved: false,
-    grid: generateGrid(25),
+    grid: generateGrid(5),
   });
 
   return (

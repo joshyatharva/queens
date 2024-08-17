@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { QueenContext } from "../context/queen";
+import { QueenContext } from "../context/QueenProvider";
 import { cn } from "../utils";
 
 interface UseQueensCellProps {

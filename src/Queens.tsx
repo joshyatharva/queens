@@ -1,15 +1,16 @@
 import Confetti from "react-confetti";
-import { RiVipCrown2Line } from "react-icons/ri";
+import { RiCloseLine, RiVipCrown2Line } from "react-icons/ri";
 import { useQueens } from "./hooks/useQueens";
 import { useQueensCell } from "./hooks/useQueensCell";
 import { cn } from "./utils";
+import { Box } from "@mui/material";
 
 const Cell = ({ i, j }: { i: number; j: number }) => {
   const { color, state, isError, onClick, onDoubleClick, solved, className } =
     useQueensCell({ i, j });
 
   return (
-    <div
+    <Box
       className={cn(className, !solved && "cursor-pointer", "relative")} // Make the div a positioning context
       style={{ backgroundColor: color }}
       onClick={!solved ? onClick : undefined}
@@ -22,24 +23,30 @@ const Cell = ({ i, j }: { i: number; j: number }) => {
           className={cn(isError && "shake", solved && "pulse")}
         />
       )}
-    </div>
+      {state === "cross" && (
+        <RiCloseLine size="20%" className="text-black/75" />
+      )}
+    </Box>
   );
 };
 
 export const Queens = () => {
   const { n, solved } = useQueens();
-
+  console.log({ n });
   return (
-    <div className="flex flex-col items-center justify-center">
+    <Box id="temp" className="w-full flex flex-col items-center justify-center">
       {Array.from({ length: n }).map((_, rowIndex) => (
-        <div
+        <Box
           key={rowIndex}
-          className="flex flex-row items-center justify-center"
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="center"
         >
           {Array.from({ length: n }).map((_, columnIndex) => (
             <Cell key={columnIndex} i={rowIndex} j={columnIndex} />
           ))}
-        </div>
+        </Box>
       ))}
       {solved && (
         <Confetti
@@ -50,6 +57,6 @@ export const Queens = () => {
           recycle={false}
         />
       )}
-    </div>
+    </Box>
   );
 };
